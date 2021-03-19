@@ -36,6 +36,13 @@ impl StorageBackend for FileStorageBackend {
             .unwrap()
     }
 
+    fn join_paths(&self, paths: &[&str]) -> String {
+        let mut iter = paths.iter();
+        let mut path = Path::new(iter.next().unwrap_or(&"")).to_path_buf();
+        iter.for_each(|s| path.push(s));
+        path.into_os_string().into_string().unwrap()
+    }
+
     async fn head_obj(&self, path: &str) -> Result<ObjectMeta, StorageError> {
         let attr = fs::metadata(path).await?;
 
@@ -106,4 +113,24 @@ async fn create_tmp_file_with_retry(
     }
 
     Err(StorageError::AlreadyExists(String::from(path)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn join_multiple_paths() {
+        let backend = FileStorageBackend::new("./");
+        assert_eq!(
+            Path::new(&backend.join_paths(&["abc", "efg/", "123"])),
+            Path::new("abc").join("efg").join("123"),
+        );
+        assert_eq!(
+            &backend.join_paths(&["abc", "efg"]),
+            &backend.join_path("abc", "efg"),
+        );
+        assert_eq!(&backend.join_paths(&["foo"]), "foo",);
+        assert_eq!(&backend.join_paths(&[]), "",);
+    }
 }
