@@ -40,9 +40,9 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: check
+          command: login
+          args: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
-      - uses: katyo/publish-crates@v1
+      - uses: actions-rs/cargo@v1
         with:
-          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          path: "./rust"
+          command: publish
